@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Camera, MapPin, Upload, X, CheckCircle, Cpu, AlertTriangle } from 'lucide-react';
 import config from '../../config';
+import { appendCustomReport } from '../../utils/reportStorage';
 import './ReportDamage.css';
 
 const DAMAGE_TYPES = ['Pothole', 'Road Crack', 'Alligator Crack', 'Surface Damage', 'Edge Break', 'Manhole Issue', 'Other'];
@@ -98,7 +99,25 @@ const ReportDamage = () => {
         e.preventDefault();
         setSubmitting(true);
         await new Promise(r => setTimeout(r, 1200));
+
+        const report = {
+            id: `RPT-${Date.now().toString().slice(-6)}`,
+            image: image,
+            type: form.type || aiResult?.type || 'Other',
+            severity: form.severity || aiResult?.severity || 'moderate',
+            location: form.location || 'Unspecified location',
+            date: new Date().toISOString().slice(0, 10),
+            status: 'reported',
+            assignedTo: null,
+            reportedBy: 'current-user',
+            description: form.description,
+            aiConfidence: aiResult?.confidence ?? null,
+            aiAnalysis: agentResult,
+        };
+
+        appendCustomReport(report);
         setSubmitted(true);
+        setSubmitting(false);
     };
 
     if (submitted) return (
@@ -106,7 +125,7 @@ const ReportDamage = () => {
             <div className="success-icon"><CheckCircle size={56} color="var(--green)" /></div>
             <h2>Report Submitted!</h2>
             <p>Your report has been sent to the municipality. Reference: <strong style={{ color: 'var(--cyan)' }}>RPT-{Date.now().toString().slice(-5)}</strong></p>
-            <button className="btn btn-primary btn-lg" onClick={() => { setSubmitted(false); setImage(null); setAiResult(null); setForm({ type: '', severity: '', location: '', description: '' }); }}>
+            <button className="btn btn-primary btn-lg" onClick={() => { setSubmitted(false); setSubmitting(false); setImage(null); setAiResult(null); setAgentResult(null); setForm({ type: '', severity: '', location: '', description: '' }); }}>
                 Report Another
             </button>
         </div>
@@ -140,7 +159,7 @@ const ReportDamage = () => {
                                         </div>
                                     </div>
                                 )}
-                                <button className="remove-img-btn" onClick={() => { setImage(null); setAiResult(null); }}>
+                                <button type="button" className="remove-img-btn" onClick={() => { setImage(null); setAiResult(null); setAgentResult(null); }}>
                                     <X size={14} />
                                 </button>
                             </div>
@@ -164,7 +183,7 @@ const ReportDamage = () => {
                         <div className="section-title" style={{ marginBottom: 12 }}><MapPin size={16} color="var(--cyan)" /> Location</div>
                         <div style={{ display: 'flex', gap: 8 }}>
                             <input className="form-input" value={form.location} onChange={e => set('location', e.target.value)} placeholder="GPS location or address..." style={{ flex: 1 }} />
-                            <button className="btn btn-outline" onClick={getGPS} disabled={gpsLoading} style={{ flexShrink: 0 }}>
+                            <button type="button" className="btn btn-outline" onClick={getGPS} disabled={gpsLoading} style={{ flexShrink: 0 }}>
                                 {gpsLoading ? <span className="spinner" /> : <MapPin size={14} />} GPS
                             </button>
                         </div>

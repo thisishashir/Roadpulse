@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Filter } from 'lucide-react';
 import { DAMAGE_REPORTS } from '../../data/mockData';
 import { SeverityBadge, StatusBadge } from '../../components/SeverityBadge';
+import { loadCustomReports } from '../../utils/reportStorage';
 
 const statuses = ['all', 'reported', 'assigned', 'inprogress', 'repaired'];
 
@@ -9,7 +10,9 @@ const MyReports = () => {
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    const filtered = DAMAGE_REPORTS.filter(r => {
+    const reports = [...loadCustomReports(), ...DAMAGE_REPORTS];
+
+    const filtered = reports.filter(r => {
         const matchSearch = r.type.toLowerCase().includes(search.toLowerCase()) ||
             r.location.toLowerCase().includes(search.toLowerCase());
         const matchStatus = filterStatus === 'all' || r.status === filterStatus;
